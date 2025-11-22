@@ -1,0 +1,58 @@
+name: healthmate
+description: A health tracking Flutter app (Steps, Calories, Water Intake)
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Database
+  sqflite: ^2.3.0
+  path_provider: ^2.1.2
+  path: ^1.8.3
+
+  # Charts
+  fl_chart: ^0.68.0
+
+  # State Management
+  flutter_riverpod: ^2.3.7
+
+  # Shared Preferences
+  shared_preferences: ^2.2.2
+
+  # Animations
+  flutter_animate: ^4.5.0
+  animations: ^2.0.10
+
+  # Date Formatter
+  intl: ^0.19.0
+
+  # Image Picker
+  image_picker: ^0.8.7+5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # Launcher icon package
+  flutter_launcher_icons: ^0.10.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+# --- Launcher Icon Configuration ---
+flutter_icons:
+  android: true
+  image_path: "assets/images/app_logo.png"  # Your app logo path
