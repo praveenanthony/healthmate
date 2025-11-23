@@ -123,10 +123,10 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // --- Date Display at Top ---
+            // --- Date Display ---
             Row(
               children: [
-                const Icon(Icons.calendar_today, size: 24),
+                const Icon(Icons.calendar_today, size: 24, color: Colors.blue),
                 const SizedBox(width: 10),
                 Text(
                   'Date: ${_selectedDate.toLocal().toString().split(' ')[0]}',
@@ -142,7 +142,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Steps',
-                prefixIcon: Icon(Icons.directions_walk),
+                prefixIcon: Icon(Icons.directions_walk, color: Colors.green),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -154,7 +154,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Calories',
-                prefixIcon: Icon(Icons.local_fire_department),
+                prefixIcon: Icon(Icons.local_fire_department, color: Colors.red),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -166,7 +166,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Water (ml)',
-                prefixIcon: Icon(Icons.water),
+                prefixIcon: Icon(Icons.water, color: Colors.blueAccent),
                 border: OutlineInputBorder(),
               ),
             ),

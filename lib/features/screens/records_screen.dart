@@ -25,7 +25,7 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
     if (picked != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(picked);
       _searchController.text = formattedDate;
-      setState(() {}); // Trigger rebuild with new search query
+      setState(() {});
     }
   }
 
@@ -55,97 +55,197 @@ class _RecordsScreenState extends ConsumerState<RecordsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the provider so UI rebuilds automatically when entries change
     final allEntries = ref.watch(healthEntryProvider);
-
-    // Sort entries by date descending
     final sortedEntries = [...allEntries]..sort((a, b) => b.date.compareTo(a.date));
-
-    // Filter entries based on search query
     final entriesToShow = _searchController.text.isEmpty
         ? sortedEntries
         : sortedEntries
             .where((e) => e.date.startsWith(_searchController.text))
             .toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Records')),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              readOnly: true,
-              decoration: InputDecoration(
-                hintText: 'Search records by date',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: _pickDateFromCalendar,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                filled: true,
-                fillColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.grey[200],
-              ),
-              onTap: _pickDateFromCalendar,
+          // --------------------- BACKGROUND IMAGE ---------------------
+          SizedBox.expand(
+            child: Image.asset(
+              'assets/images/background_image.png',
+              fit: BoxFit.cover,
             ),
           ),
-          Expanded(
-            child: entriesToShow.isEmpty
-                ? const Center(child: Text('No records found.'))
-                : ListView.builder(
-                    itemCount: entriesToShow.length,
-                    itemBuilder: (context, index) {
-                      final e = entriesToShow[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
-                        child: ListTile(
-                          title: Text('Date: ${e.date.split('T')[0]}'),
-                          subtitle: Text(
-                              'Steps: ${e.steps}, Calories: ${e.calories}, Water: ${e.water} ml'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => AddEntryScreen(
-                                        existing: e,
-                                        onSaved: () {
-                                          ref
-                                              .read(
-                                                  healthEntryProvider.notifier)
-                                              .refresh();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => _confirmDelete(e.id!),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+
+          // --------------------- MAIN CONTENT -------------------------
+          Column(
+            children: [
+              // Search Box
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  controller: _searchController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search records by date',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: _pickDateFromCalendar,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    filled: true,
+                    fillColor: isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.grey[200],
                   ),
+                  onTap: _pickDateFromCalendar,
+                ),
+              ),
+
+              // Records List
+              Expanded(
+                child: entriesToShow.isEmpty
+                    ? const Center(child: Text('No records found.'))
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        itemCount: entriesToShow.length,
+                        itemBuilder: (context, index) {
+                          final e = entriesToShow[index];
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isDark
+                                    ? [const Color.fromARGB(255, 46, 38, 56), const Color.fromARGB(255, 46, 38, 56)]
+                                    : [Colors.white, const Color.fromARGB(255, 241, 227, 253)],
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDark
+                                      ? Colors.black.withOpacity(0.4)
+                                      : const Color.fromARGB(255, 149, 68, 255).withOpacity(0.15),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Date Row + Menu
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        DateFormat('yyyy-MM-dd')
+                                            .format(DateTime.parse(e.date)),
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                      PopupMenuButton<String>(
+                                        icon: Icon(Icons.more_vert,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black54),
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => AddEntryScreen(
+                                                  existing: e,
+                                                  onSaved: () {
+                                                    ref.read(healthEntryProvider.notifier).refresh();
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          } else if (value == 'delete') {
+                                            _confirmDelete(e.id!);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Text('Edit'),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // Steps, Calories, Water
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildInfoItem(
+                                        icon: Icons.directions_walk,
+                                        label: "Steps",
+                                        value: e.steps.toString(),
+                                        color: Colors.green,
+                                      ),
+                                      _buildInfoItem(
+                                        icon: Icons.local_fire_department,
+                                        label: "Calories",
+                                        value: e.calories.toString(),
+                                        color: Colors.red,
+                                      ),
+                                      _buildInfoItem(
+                                        icon: Icons.waves,
+                                        label: "Water",
+                                        value: "${e.water} ml",
+                                        color: Colors.blue,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, size: 26, color: color),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 13)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 }

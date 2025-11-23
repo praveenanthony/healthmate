@@ -13,57 +13,87 @@ import '../health_records/health_entry.dart';
 import 'package:healthmate/services/auth_service.dart';
 import '../../main.dart';
 
-// Providers for HomeScreen state
-final todayStepsProvider = StateProvider<int>((ref) => 0);
-final todayCaloriesProvider = StateProvider<int>((ref) => 0);
-final todayWaterProvider = StateProvider<int>((ref) => 0);
+// ----------------------- Providers -----------------------
 
-final stepsWeekProvider = StateProvider<List<double>>((ref) => []);
-final caloriesWeekProvider = StateProvider<List<double>>((ref) => []);
-final waterWeekProvider = StateProvider<List<double>>((ref) => []);
-final weekDatesProvider = StateProvider<List<DateTime>>((ref) => []);
+// Profile State
+final profileProvider = StateNotifierProvider<ProfileNotifier, Map<String, dynamic>>(
+  (ref) => ProfileNotifier(),
+);
 
-final profileProvider = StateProvider<Map<String, dynamic>>((ref) => {
-      'image': 'assets/images/profile_placeholder.png',
-      'name': 'Praveen',
-      'email': 'praveen@example.com',
-      'phone': '0771234567',
-      'age': '25',
-      'weight': '70',
-      'height': '175',
-    });
+// Health Summary State
+final healthSummaryProvider = StateNotifierProvider<HealthSummaryNotifier, HealthSummary>(
+  (ref) => HealthSummaryNotifier(),
+);
 
-class HomeScreen extends ConsumerStatefulWidget {
-  final VoidCallback? onToggleTheme;
-  const HomeScreen({super.key, this.onToggleTheme});
+// Search Results State
+final searchResultsProvider =
+    StateNotifierProvider<SearchResultsNotifier, List<HealthEntry>>(
+        (ref) => SearchResultsNotifier());
 
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+// ----------------------- Models -----------------------
+class HealthSummary {
+  final int todaySteps;
+  final int todayCalories;
+  final int todayWater;
+  final List<double> stepsWeek;
+  final List<double> caloriesWeek;
+  final List<double> waterWeek;
+  final List<DateTime> weekDates;
+
+  HealthSummary({
+    this.todaySteps = 0,
+    this.todayCalories = 0,
+    this.todayWater = 0,
+    this.stepsWeek = const [],
+    this.caloriesWeek = const [],
+    this.waterWeek = const [],
+    this.weekDates = const [],
+  });
+
+  HealthSummary copyWith({
+    int? todaySteps,
+    int? todayCalories,
+    int? todayWater,
+    List<double>? stepsWeek,
+    List<double>? caloriesWeek,
+    List<double>? waterWeek,
+    List<DateTime>? weekDates,
+  }) {
+    return HealthSummary(
+      todaySteps: todaySteps ?? this.todaySteps,
+      todayCalories: todayCalories ?? this.todayCalories,
+      todayWater: todayWater ?? this.todayWater,
+      stepsWeek: stepsWeek ?? this.stepsWeek,
+      caloriesWeek: caloriesWeek ?? this.caloriesWeek,
+      waterWeek: waterWeek ?? this.waterWeek,
+      weekDates: weekDates ?? this.weekDates,
+    );
+  }
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _isLoading = false;
-  final TextEditingController _searchController = TextEditingController();
-  List<HealthEntry> _searchResults = [];
-  bool _isSearching = false;
+// ----------------------- Notifiers -----------------------
+class ProfileNotifier extends StateNotifier<Map<String, dynamic>> {
+  ProfileNotifier()
+      : super({
+          'image': 'assets/images/profile_placeholder.png',
+          'name': 'Praveen',
+          'email': 'praveen@example.com',
+          'phone': '0771234567',
+          'age': '25',
+          'weight': '70',
+          'height': '175',
+        });
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSummary();
+  void updateProfile(Map<String, dynamic> newProfile) {
+    state = newProfile;
   }
+}
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+class HealthSummaryNotifier extends StateNotifier<HealthSummary> {
+  HealthSummaryNotifier() : super(HealthSummary());
 
-  /// Load daily summary and weekly stats
-  Future<void> _loadSummary() async {
+  Future<void> loadSummary() async {
     try {
-      setState(() => _isLoading = true);
-
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final entriesToday = await HealthDatabase.instance.readByDate(todayStr);
 
@@ -99,73 +129,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         waterWeek.add(water.toDouble());
       }
 
-      if (mounted) {
-        ref.read(todayStepsProvider.notifier).state = totalSteps;
-        ref.read(todayCaloriesProvider.notifier).state = totalCalories;
-        ref.read(todayWaterProvider.notifier).state = totalWater;
-        ref.read(weekDatesProvider.notifier).state = weekDates;
-        ref.read(stepsWeekProvider.notifier).state = stepsWeek;
-        ref.read(caloriesWeekProvider.notifier).state = caloriesWeek;
-        ref.read(waterWeekProvider.notifier).state = waterWeek;
-      }
+      state = state.copyWith(
+        todaySteps: totalSteps,
+        todayCalories: totalCalories,
+        todayWater: totalWater,
+        stepsWeek: stepsWeek,
+        caloriesWeek: caloriesWeek,
+        waterWeek: waterWeek,
+        weekDates: weekDates,
+      );
     } catch (e) {
-      _showError('Failed to load summary: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // Handle error if needed
     }
   }
+}
 
-  /// Navigate to AddEntryScreen and refresh summary after save
-  void _goToAddEntry([HealthEntry? existing]) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AddEntryScreen(
-          existing: existing,
-          onSaved: _loadSummary,
-        ),
-      ),
-    );
-  }
+class SearchResultsNotifier extends StateNotifier<List<HealthEntry>> {
+  SearchResultsNotifier() : super([]);
 
-  /// Navigate to RecordsScreen and refresh summary automatically via Riverpod
-  void _goToRecords() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const RecordsScreen(),
-      ),
-    ).then((_) => _loadSummary());
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
-
-  double _getSafeMaxY(List<double> values) {
-    if (values.isEmpty) return 10.0;
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
-    return maxVal > 0 ? maxVal * 1.3 : 10.0;
-  }
-
-  Future<void> _searchRecords(String query) async {
+  Future<void> searchRecords(String query) async {
     if (query.isEmpty) {
-      setState(() {
-        _isSearching = false;
-        _searchResults = [];
-      });
+      state = [];
       return;
     }
-
     try {
-      setState(() => _isSearching = true);
       final results = await HealthDatabase.instance.readByDate(query);
-      setState(() {
-        _searchResults = results;
-      });
-    } catch (e) {
-      _showError('Failed to search records: $e');
+      state = results;
+    } catch (_) {
+      state = [];
     }
+  }
+
+  void clear() {
+    state = [];
+  }
+}
+
+// ----------------------- HomeScreen -----------------------
+class HomeScreen extends ConsumerStatefulWidget {
+  final VoidCallback? onToggleTheme;
+  const HomeScreen({super.key, this.onToggleTheme});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(healthSummaryProvider.notifier).loadSummary();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickDateFromCalendar() async {
@@ -179,11 +201,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (picked != null) {
       String formattedDate = DateFormat('yyyy-MM-dd').format(picked);
       _searchController.text = formattedDate;
-      _searchRecords(formattedDate);
+      await ref.read(searchResultsProvider.notifier).searchRecords(formattedDate);
+      setState(() => _isSearching = true);
     }
   }
 
-  /// --- FIXED LOGOUT ---
   void _handleLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -206,49 +228,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (confirmed ?? false) {
       try {
         await ref.read(authStateProvider.notifier).logout();
-
         if (mounted) {
           Navigator.of(context).pushNamedAndRemoveUntil(
               '/login', (Route<dynamic> route) => false);
         }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Logout failed: $e')),
-        );
-      }
+      } catch (_) {}
     }
+  }
+
+  void _goToAddEntry([HealthEntry? existing]) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddEntryScreen(
+          existing: existing,
+          onSaved: () =>
+              ref.read(healthSummaryProvider.notifier).loadSummary(),
+        ),
+      ),
+    );
+  }
+
+  void _goToRecords() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const RecordsScreen(),
+      ),
+    ).then((_) => ref.read(healthSummaryProvider.notifier).loadSummary());
+  }
+
+  double _getSafeMaxY(List<double> values) {
+    if (values.isEmpty) return 10.0;
+    final maxVal = values.reduce((a, b) => a > b ? a : b);
+    return maxVal > 0 ? maxVal * 1.3 : 10.0;
   }
 
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
-    final todaySteps = ref.watch(todayStepsProvider);
-    final todayCalories = ref.watch(todayCaloriesProvider);
-    final todayWater = ref.watch(todayWaterProvider);
-    final stepsWeek = ref.watch(stepsWeekProvider);
-    final caloriesWeek = ref.watch(caloriesWeekProvider);
-    final waterWeek = ref.watch(waterWeekProvider);
+    final summary = ref.watch(healthSummaryProvider);
+    final searchResults = ref.watch(searchResultsProvider);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navIconColor = isDark ? Colors.purple[200] : Colors.deepPurple;
+    final navBgColor = isDark ? Colors.grey[850] : const Color(0xFFF5F5F5);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // <-- removed back arrow
+        automaticallyImplyLeading: false,
         title: const Text('Healthmate'),
         elevation: 2,
         actions: [
           IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.wb_sunny
-                  : Icons.nights_stay,
-            ),
-            onPressed: widget.onToggleTheme ?? () {
-              final themeNotifier = ref.read(themeModeProvider.notifier);
-              themeNotifier.state =
-                  themeNotifier.state == ThemeMode.light
+            icon: Icon(isDark ? Icons.wb_sunny : Icons.nights_stay),
+            onPressed: widget.onToggleTheme ??
+                () {
+                  final themeNotifier = ref.read(themeModeProvider.notifier);
+                  themeNotifier.state = themeNotifier.state == ThemeMode.light
                       ? ThemeMode.dark
                       : ThemeMode.light;
-            },
+                },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -257,27 +296,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadSummary,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildProfileHeader(profile),
-                  const SizedBox(height: 12),
-                  _buildSearchBar(),
-                  const SizedBox(height: 12),
-                  _buildMetricsRow(todaySteps, todayCalories),
-                  const SizedBox(height: 12),
-                  _buildWaterCard(todayWater),
-                  const SizedBox(height: 20),
-                  if (!_isSearching)
-                    _buildWeeklyCharts(stepsWeek, caloriesWeek, waterWeek),
-                  if (_isSearching) _buildSearchResults(),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(healthSummaryProvider.notifier).loadSummary(),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildProfileHeader(profile),
+            const SizedBox(height: 16),
+            _buildSearchBar(),
+            const SizedBox(height: 12),
+            _buildMetricsRow(summary.todaySteps, summary.todayCalories),
+            const SizedBox(height: 12),
+            _buildWaterCard(summary.todayWater),
+            const SizedBox(height: 20),
+            if (!_isSearching) ...[
+              const Text(
+                'Weekly Activity Overview',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-            ),
+              const SizedBox(height: 12),
+              _buildWeeklyCharts(
+                  summary.stepsWeek,
+                  summary.caloriesWeek,
+                  summary.waterWeek,
+                  summary.weekDates),
+            ],
+            if (_isSearching)
+              _buildSearchResults(searchResults),
+          ],
+        ),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: SizedBox(
         height: 60,
@@ -291,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 6,
-        color: Theme.of(context).colorScheme.surface,
+        color: navBgColor,
         child: SizedBox(
           height: 60,
           child: Row(
@@ -301,23 +349,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onTap: () {
                   setState(() {
                     _isSearching = false;
-                    _searchResults = [];
                     _searchController.clear();
                   });
-                  _loadSummary();
+                  ref.read(searchResultsProvider.notifier).clear();
+                  ref.read(healthSummaryProvider.notifier).loadSummary();
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.home, color: Theme.of(context).primaryColor),
+                    Icon(Icons.home, color: navIconColor),
                     const SizedBox(height: 2),
                     Text(
                       'Home',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      style: TextStyle(fontSize: 10, color: navIconColor),
                     ),
                   ],
                 ),
@@ -329,14 +374,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.list_alt, color: Theme.of(context).primaryColor),
+                    Icon(Icons.list_alt, color: navIconColor),
                     const SizedBox(height: 2),
                     Text(
                       'Records',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      style: TextStyle(fontSize: 10, color: navIconColor),
                     ),
                   ],
                 ),
@@ -348,56 +390,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // --- Widgets: Profile, Search, Metrics, Charts ---
+  // ------------------ Widgets ------------------
+
   Widget _buildProfileHeader(Map<String, dynamic> profile) {
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(DateTime.now());
-    return Row(
+
+    return Stack(
       children: [
-        GestureDetector(
-          onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ProfileSettingsScreen(
-                  currentName: profile['name'],
-                  currentEmail: profile['email'],
-                  currentPhone: profile['phone'],
-                  currentAge: profile['age'],
-                  currentWeight: profile['weight'],
-                  currentHeight: profile['height'],
-                  currentProfileImage: profile['image'],
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileSettingsScreen(
+                      currentName: profile['name'],
+                      currentEmail: profile['email'],
+                      currentPhone: profile['phone'],
+                      currentAge: profile['age'],
+                      currentWeight: profile['weight'],
+                      currentHeight: profile['height'],
+                      currentProfileImage: profile['image'],
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  ref.read(profileProvider.notifier).updateProfile(result);
+                }
+              },
+              child: Hero(
+                tag: 'avatar',
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: profile['image'].startsWith('assets/')
+                      ? AssetImage(profile['image'])
+                      : FileImage(File(profile['image'])) as ImageProvider,
                 ),
               ),
-            );
-            if (result != null) ref.read(profileProvider.notifier).state = result;
-          },
-          child: Hero(
-            tag: 'avatar',
-            child: CircleAvatar(
-              radius: 30,
-              backgroundImage: profile['image'].startsWith('assets/')
-                  ? AssetImage(profile['image'])
-                  : FileImage(File(profile['image'])) as ImageProvider,
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Welcome back,',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color:
+                              Theme.of(context).textTheme.bodySmall?.color)),
+                  Text(profile['name'],
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(dateStr,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              Theme.of(context).textTheme.bodySmall?.color)),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Welcome back,',
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).textTheme.bodySmall?.color)),
-              Text(profile['name'],
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(dateStr,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).textTheme.bodySmall?.color)),
-            ],
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.deepPurple,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
+              onPressed: () {},
+            ),
           ),
         ),
       ],
@@ -413,8 +479,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
         decoration: InputDecoration(
           hintText: 'Search records',
-          hintStyle:
-              TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+          hintStyle: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color),
           prefixIcon: Icon(Icons.search,
               size: 20, color: Theme.of(context).iconTheme.color),
           suffixIcon: IconButton(
@@ -438,8 +504,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSearchResults() {
-    if (_searchResults.isEmpty) {
+  Widget _buildSearchResults(List<HealthEntry> results) {
+    if (results.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
@@ -448,9 +514,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: _searchResults.map((entry) {
+      children: results.map((entry) {
         DateTime entryDate;
         try {
           entryDate = DateTime.parse(entry.date);
@@ -519,7 +586,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildWeeklyCharts(List<double> steps, List<double> calories, List<double> water) {
+  Widget _buildWeeklyCharts(List<double> steps, List<double> calories,
+      List<double> water, List<DateTime> weekDates) {
     final activities = [
       {'label': 'Steps', 'values': steps, 'color': Colors.blueAccent},
       {'label': 'Calories', 'values': calories, 'color': Colors.redAccent},
@@ -538,73 +606,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Card(
             color: Theme.of(context).cardColor,
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(activity['label'] as String,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color)),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 180,
+                    height: 120,
                     child: LineChart(
                       LineChartData(
+                        minX: 0,
+                        maxX: 6,
                         minY: 0,
                         maxY: safeMaxY,
-                        lineTouchData: LineTouchData(enabled: false),
+                        gridData: FlGridData(show: true),
+                        borderData: FlBorderData(show: false),
                         titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: true)),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 1,
-                              getTitlesWidget: (value, meta) {
-                                int index = value.toInt();
-                                if (index < 0 || index >= 7) return const SizedBox();
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                    DateFormat('E').format(DateTime.now().subtract(Duration(days: 6 - index))),
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 10,
-                                        color: Theme.of(context).textTheme.bodySmall?.color),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 40,
-                              getTitlesWidget: (value, meta) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text(
-                                    value.toInt().toString(),
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: Theme.of(context).textTheme.bodySmall?.color),
-                                    textAlign: TextAlign.right,
-                                  ),
-                                );
+                              getTitlesWidget: (value, _) {
+                                if (value < 0 || value > 6) return const SizedBox();
+                                return Text(DateFormat('E').format(
+                                    weekDates[value.toInt()]));
                               },
                             ),
                           ),
                         ),
-                        gridData: FlGridData(show: true, drawVerticalLine: false),
-                        borderData: FlBorderData(show: false),
                         lineBarsData: [
                           LineChartBarData(
                             spots: List.generate(
-                              values.length,
-                              (index) => FlSpot(index.toDouble(), values[index]),
-                            ),
+                                values.length,
+                                (index) => FlSpot(
+                                    index.toDouble(), values[index])),
                             isCurved: true,
                             barWidth: 3,
                             color: lineColor,
