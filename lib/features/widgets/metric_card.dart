@@ -5,8 +5,8 @@ class MetricCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Gradient gradient;
-  final double? goal;      // optional goal
-  final double? progress;  // 0.0 to 1.0
+  final double? goal;      
+  final double? progress;  
 
   const MetricCard({
     super.key,
@@ -41,7 +41,7 @@ class MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: icon + value
+
           Row(
             children: [
               Icon(icon, color: Colors.white),
@@ -57,19 +57,18 @@ class MetricCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // Label
+          
           Text(
             label,
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 12),
 
-          // Goal progress bar
           if (goal != null && progress != null)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Percentage text above the bar
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

@@ -53,14 +53,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
+
           SizedBox.expand(
             child: Image.asset(
               'assets/images/background_image.png',
               fit: BoxFit.cover,
             ),
           ),
-          // Login Form
+
           SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 130),
             child: Column(

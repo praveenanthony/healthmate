@@ -97,7 +97,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
     setState(() => _isSaving = false);
 
-    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Entry saved successfully!'),
@@ -106,7 +105,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       ),
     );
 
-    // Call callback and navigate back after 2 seconds
     widget.onSaved?.call();
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.pop(context);
@@ -136,7 +134,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- Steps Input ---
             TextField(
               controller: _stepsController,
               keyboardType: TextInputType.number,
@@ -148,7 +145,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- Calories Input ---
             TextField(
               controller: _caloriesController,
               keyboardType: TextInputType.number,
@@ -160,7 +156,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
             ),
             const SizedBox(height: 12),
 
-            // --- Water Input ---
             TextField(
               controller: _waterController,
               keyboardType: TextInputType.number,
@@ -172,7 +167,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- Save Button ---
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

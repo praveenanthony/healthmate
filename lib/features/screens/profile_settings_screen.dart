@@ -109,7 +109,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Profile image picker
+
             GestureDetector(
               onTap: _pickImage,
               child: CircleAvatar(
@@ -121,7 +121,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Input fields
             _buildTextField(label: 'Name', controller: _nameController),
             _buildTextField(label: 'Email', controller: _emailController),
             _buildTextField(label: 'Phone', controller: _phoneController),
@@ -130,7 +129,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             _buildTextField(label: 'Height (cm)', controller: _heightController),
             const SizedBox(height: 20),
 
-            // Full-width Save button like AddEntryScreen
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

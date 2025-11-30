@@ -17,7 +17,7 @@ class EntryCard extends StatelessWidget {
         subtitle: Text('Steps: ${entry.steps} • Calories: ${entry.calories} • Water: ${entry.water}ml'),
         trailing: PopupMenuButton<String>(onSelected: (v) { if (v == 'edit') {
           onEdit();
-        // ignore: curly_braces_in_flow_control_structures
+
         } else if (v == 'delete') onDelete(); }, itemBuilder: (_) => [PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'delete', child: Text('Delete'))]),
       ),
     );

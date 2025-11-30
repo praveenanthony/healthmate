@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../health_records/health_entry.dart';
 import '../../db/health_database.dart';
 
-// Optional AuthService (from your previous code)
 class AuthService {
   static final Map<String, String> _users = {};
 
@@ -23,7 +22,6 @@ class AuthService {
   }
 }
 
-// HealthEntry Riverpod Provider
 final healthEntryProvider =
     StateNotifierProvider<HealthEntryNotifier, List<HealthEntry>>(
   (ref) => HealthEntryNotifier(),

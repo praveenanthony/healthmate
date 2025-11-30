@@ -5,7 +5,6 @@ import 'features/screens/login_screen.dart';
 import 'features/screens/home_screen.dart';
 import 'features/screens/register_screen.dart';
 
-// Theme provider
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
 void main() {

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthService {
-  // Allowed credentials
   final String allowedEmail = 'praveen@gmail.com';
   final String allowedPassword = '123456';
   String? _loggedInEmail;
@@ -9,7 +8,6 @@ class AuthService {
   bool get isLoggedIn => _loggedInEmail != null;
   String? get currentUser => _loggedInEmail;
 
-  // Login
   Future<bool> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 1));
     if (email == allowedEmail && password == allowedPassword) {
@@ -19,7 +17,6 @@ class AuthService {
     return false;
   }
 
-  // Register (restricted)
   Future<bool> register(String email, String password, String confirmPassword) async {
     await Future.delayed(const Duration(seconds: 1));
     if (email == allowedEmail &&
@@ -31,14 +28,12 @@ class AuthService {
     return false;
   }
 
-  // Logout
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 200));
     _loggedInEmail = null;
   }
 }
 
-// Providers
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, bool>((ref) {

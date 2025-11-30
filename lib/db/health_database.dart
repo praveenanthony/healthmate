@@ -159,7 +159,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get calories summary for a date range
   Future<Map<String, int>> getCaloriesSummary(String startDate, String endDate) async {
     try {
       final db = await instance.database;
@@ -180,7 +179,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get water intake summary for a date range
   Future<Map<String, int>> getWaterSummary(String startDate, String endDate) async {
     try {
       final db = await instance.database;
@@ -201,7 +199,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get all statistics (steps, calories, water) for a date range
   Future<Map<String, Map<String, int>>> getAllStats(String startDate, String endDate) async {
     try {
       final steps = await getStepsSummary(startDate, endDate);
@@ -218,7 +215,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get max values for all metrics in a date range
   Future<Map<String, int>> getMaxValues(String startDate, String endDate) async {
     try {
       final db = await instance.database;
@@ -240,7 +236,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get daily stats for a specific date
   Future<Map<String, dynamic>> getDailyStats(String date) async {
     try {
       final entries = await readByDate(date);
@@ -266,7 +261,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get weekly stats (last 7 days)
   Future<Map<String, dynamic>> getWeeklyStats() async {
     try {
       final endDate = DateTime.now();
@@ -290,7 +284,6 @@ class HealthDatabase {
     }
   }
 
-  /// Get monthly stats (last 30 days)
   Future<Map<String, dynamic>> getMonthlyStats() async {
     try {
       final endDate = DateTime.now();
@@ -314,7 +307,6 @@ class HealthDatabase {
     }
   }
 
-  /// Bulk insert multiple entries
   Future<List<int>> bulkInsert(List<HealthEntry> entries) async {
     try {
       final db = await instance.database;
@@ -331,7 +323,6 @@ class HealthDatabase {
     }
   }
 
-  /// Bulk update multiple entries
   Future<int> bulkUpdate(List<HealthEntry> entries) async {
     try {
       final db = await instance.database;
@@ -352,7 +343,6 @@ class HealthDatabase {
     }
   }
 
-  /// Bulk delete by list of IDs
   Future<int> bulkDelete(List<int> ids) async {
     try {
       final db = await instance.database;
@@ -367,7 +357,6 @@ class HealthDatabase {
     }
   }
 
-  /// Check if database is empty
   Future<bool> isEmpty() async {
     try {
       final count = await getRecordCount();
@@ -377,7 +366,6 @@ class HealthDatabase {
     }
   }
 
-  /// Delete all records (clear database)
   Future<void> clearAll() async {
     try {
       final db = await instance.database;
@@ -387,7 +375,6 @@ class HealthDatabase {
     }
   }
 
-  /// Format DateTime to yyyy-MM-dd string
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }

@@ -13,12 +13,12 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> _loadTheme() async {
     _themeMode = await _service.getTheme();
-    notifyListeners(); // rebuild MaterialApp
+    notifyListeners(); 
   }
 
   Future<void> toggleTheme() async {
     final isDark = _themeMode == ThemeMode.dark;
     _themeMode = await _service.toggleTheme(isDark);
-    notifyListeners(); // rebuild MaterialApp
+    notifyListeners(); 
   }
 }

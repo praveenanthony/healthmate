@@ -13,24 +13,18 @@ import '../health_records/health_entry.dart';
 import 'package:healthmate/services/auth_service.dart';
 import '../../main.dart';
 
-// ----------------------- Providers -----------------------
-
-// Profile State
 final profileProvider = StateNotifierProvider<ProfileNotifier, Map<String, dynamic>>(
   (ref) => ProfileNotifier(),
 );
 
-// Health Summary State
 final healthSummaryProvider = StateNotifierProvider<HealthSummaryNotifier, HealthSummary>(
   (ref) => HealthSummaryNotifier(),
 );
 
-// Search Results State
 final searchResultsProvider =
     StateNotifierProvider<SearchResultsNotifier, List<HealthEntry>>(
         (ref) => SearchResultsNotifier());
 
-// ----------------------- Models -----------------------
 class HealthSummary {
   final int todaySteps;
   final int todayCalories;
@@ -71,7 +65,6 @@ class HealthSummary {
   }
 }
 
-// ----------------------- Notifiers -----------------------
 class ProfileNotifier extends StateNotifier<Map<String, dynamic>> {
   ProfileNotifier()
       : super({
@@ -165,7 +158,6 @@ class SearchResultsNotifier extends StateNotifier<List<HealthEntry>> {
   }
 }
 
-// ----------------------- HomeScreen -----------------------
 class HomeScreen extends ConsumerStatefulWidget {
   final VoidCallback? onToggleTheme;
   const HomeScreen({super.key, this.onToggleTheme});
@@ -281,13 +273,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(isDark ? Icons.wb_sunny : Icons.nights_stay),
-            onPressed: widget.onToggleTheme ??
-                () {
-                  final themeNotifier = ref.read(themeModeProvider.notifier);
-                  themeNotifier.state = themeNotifier.state == ThemeMode.light
-                      ? ThemeMode.dark
-                      : ThemeMode.light;
-                },
+            onPressed: widget.onToggleTheme ?? () {
+              final themeNotifier = ref.read(themeModeProvider.notifier);
+              themeNotifier.state = themeNotifier.state == ThemeMode.light
+                  ? ThemeMode.dark
+                  : ThemeMode.light;
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -389,8 +380,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
-  // ------------------ Widgets ------------------
 
   Widget _buildProfileHeader(Map<String, dynamic> profile) {
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(DateTime.now());
@@ -600,59 +589,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final values = activity['values'] as List<double>;
         final safeMaxY = _getSafeMaxY(values);
         final Color lineColor = activity['color'] as Color;
+        final maxXValue = values.isNotEmpty ? values.length - 1 : 1;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Card(
             color: Theme.of(context).cardColor,
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(activity['label'] as String,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
+                          fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
                   SizedBox(
-                    height: 120,
+                    height: 150,
                     child: LineChart(
                       LineChartData(
-                        minX: 0,
-                        maxX: 6,
                         minY: 0,
                         maxY: safeMaxY,
-                        gridData: FlGridData(show: true),
-                        borderData: FlBorderData(show: false),
-                        titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: true)),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, _) {
-                                if (value < 0 || value > 6) return const SizedBox();
-                                return Text(DateFormat('E').format(
-                                    weekDates[value.toInt()]));
-                              },
-                            ),
-                          ),
-                        ),
+                        minX: 0,
+                        maxX: maxXValue.toDouble(),
                         lineBarsData: [
                           LineChartBarData(
                             spots: List.generate(
-                                values.length,
-                                (index) => FlSpot(
-                                    index.toDouble(), values[index])),
+                              values.length,
+                              (i) => FlSpot(i.toDouble(), values[i]),
+                            ),
                             isCurved: true,
                             barWidth: 3,
                             color: lineColor,
                             dotData: FlDotData(show: true),
                           ),
                         ],
+                        titlesData: FlTitlesData(
+                          show: true,
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              interval: safeMaxY / 5,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  value.toInt().toString(),
+                                  style: const TextStyle(fontSize: 10),
+                                );
+                              },
+                            ),
+                          ),
+                          rightTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 24,
+                              getTitlesWidget: (value, meta) {
+                                int index = value.toInt();
+                                if (index >= 0 && index < weekDates.length) {
+                                  return Text(
+                                    DateFormat('E').format(weekDates[index]),
+                                    style: const TextStyle(fontSize: 10),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                          topTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                        ),
+                        gridData: FlGridData(
+                          show: true,
+                          drawHorizontalLine: true,
+                          drawVerticalLine: true,
+                          horizontalInterval: safeMaxY / 5,
+                          verticalInterval: 1,
+                        ),
+                        borderData: FlBorderData(
+                          show: true,
+                          border: Border(
+                            left: BorderSide(color: Colors.grey.shade300),
+                            bottom: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
                       ),
                     ),
                   ),
