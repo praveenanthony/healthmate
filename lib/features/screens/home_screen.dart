@@ -85,8 +85,31 @@ class ProfileNotifier extends StateNotifier<Map<String, dynamic>> {
 class HealthSummaryNotifier extends StateNotifier<HealthSummary> {
   HealthSummaryNotifier() : super(HealthSummary());
 
+  Future<void> _insertSampleDataIfEmpty() async {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final todayEntries = await HealthDatabase.instance.readByDate(todayStr);
+
+    if (todayEntries.isNotEmpty) return;
+
+    final today = DateTime.now();
+    for (int i = 0; i < 7; i++) {
+      final date = today.subtract(Duration(days: 6 - i));
+      await HealthDatabase.instance.create(
+        HealthEntry(
+          id: null,
+          date: DateFormat('yyyy-MM-dd').format(date),
+          steps: 1000 + i * 500,   
+          calories: 500 + i * 50, 
+          water: 900 + i * 50,
+        ),
+      );
+    }
+  }
+
   Future<void> loadSummary() async {
     try {
+      await _insertSampleDataIfEmpty();
+      
       final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final entriesToday = await HealthDatabase.instance.readByDate(todayStr);
 
@@ -132,7 +155,7 @@ class HealthSummaryNotifier extends StateNotifier<HealthSummary> {
         weekDates: weekDates,
       );
     } catch (e) {
-      // Handle error if needed
+      print('Error loading summary: $e');
     }
   }
 }
@@ -272,7 +295,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         elevation: 2,
         actions: [
           IconButton(
-            icon: Icon(isDark ? Icons.wb_sunny : Icons.nights_stay),
+            icon: Icon(
+              isDark ? Icons.wb_sunny : Icons.nights_stay),
             onPressed: widget.onToggleTheme ?? () {
               final themeNotifier = ref.read(themeModeProvider.notifier);
               themeNotifier.state = themeNotifier.state == ThemeMode.light

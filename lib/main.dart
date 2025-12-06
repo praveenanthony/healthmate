@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/screens/splash_screen.dart';
 import 'features/screens/login_screen.dart';
-import 'features/screens/home_screen.dart';
 import 'features/screens/register_screen.dart';
+import 'features/screens/home_screen.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
@@ -36,7 +36,7 @@ class MyApp extends ConsumerWidget {
         '/': (_) => const SplashScreen(),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
-        '/home': (_) => const HomeScreen(onToggleTheme: null),
+        '/home': (_) => const HomeScreen(),
       },
     );
   }
